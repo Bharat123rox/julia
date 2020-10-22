@@ -352,7 +352,7 @@ static DWORD WINAPI profile_bt( LPVOID lparam )
                 else {
                     // Get backtrace data
                     bt_size_cur += rec_backtrace_ctx((jl_bt_element_t*)bt_data_prof + bt_size_cur,
-                            bt_size_max - bt_size_cur - 1, &ctxThread, NULL);
+                            bt_size_max - bt_size_cur - 1, &ctxThread, NULL, 1);
                     // Mark the end of this block with 0
                     if (bt_size_cur < bt_size_max)
                         bt_data_prof[bt_size_cur++].uintptr = 0;

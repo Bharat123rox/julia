@@ -71,16 +71,16 @@ julia-libccalltest: julia-deps
 julia-libllvmcalltest: julia-deps
 	@$(MAKE) $(QUIET_MAKE) -C $(BUILDROOT)/src libllvmcalltest
 
-julia-src-release julia-src-debug : julia-src-% : julia-deps julia_flisp.boot.inc.phony
-	@$(MAKE) $(QUIET_MAKE) -C $(BUILDROOT)/src libjulia-$*
+julia-src-release julia-src-debug : julia-src-% : julia-deps julia_flisp.boot.inc.phony julia-cli-%
+	@$(MAKE) $(QUIET_MAKE) -C $(BUILDROOT)/src $*
 
-julia-cli-release julia-cli-debug : julia-cli-% : julia-src-%
-	@$(MAKE) $(QUIET_MAKE) -C $(BUILDROOT)/cli julia-$*
+julia-cli-release julia-cli-debug: julia-cli-% :
+	@$(MAKE) $(QUIET_MAKE) -C $(BUILDROOT)/cli $*
 
-julia-sysimg-ji : julia-stdlib julia-base julia-cli-$(JULIA_BUILD_MODE) | $(build_private_libdir)
+julia-sysimg-ji : julia-stdlib julia-base julia-cli-$(JULIA_BUILD_MODE) julia-src-$(JULIA_BUILD_MODE) | $(build_private_libdir)
 	@$(MAKE) $(QUIET_MAKE) -C $(BUILDROOT) -f sysimage.mk sysimg-ji JULIA_EXECUTABLE='$(JULIA_EXECUTABLE)'
 
-julia-sysimg-bc : julia-stdlib julia-base julia-cli-$(JULIA_BUILD_MODE) | $(build_private_libdir)
+julia-sysimg-bc : julia-stdlib julia-base julia-cli-$(JULIA_BUILD_MODE) julia-src-$(JULIA_BUILD_MODE) | $(build_private_libdir)
 	@$(MAKE) $(QUIET_MAKE) -C $(BUILDROOT) -f sysimage.mk sysimg-bc JULIA_EXECUTABLE='$(JULIA_EXECUTABLE)'
 
 julia-sysimg-release julia-sysimg-debug : julia-sysimg-% : julia-sysimg-ji julia-cli-%

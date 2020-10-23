@@ -4,6 +4,9 @@
 extern "C" {
 #endif
 
+/* Bring in definitions of symbols exported from libjulia. */
+#include "jl_exports.h"
+
 /* Bring in helper functions for windows without libgcc. */
 #ifdef _OS_WINDOWS_
 #include "loader_win_utils.c"
@@ -131,9 +134,8 @@ const char * get_exe_dir()
     return exe_dir;
 }
 
-// Load libjulia and run the REPL with the given arguments (in UTF-8 format)
-int load_repl(const char * exe_dir, int argc, char * argv[])
-{
+
+void * load_libjulia_internal(const char * exe_dir) {
     // Pre-load libraries that libjulia needs.
     int deps_len = strlen(dep_libs);
     char * curr_dep = &dep_libs[0];
@@ -151,14 +153,22 @@ int load_repl(const char * exe_dir, int argc, char * argv[])
         curr_dep = colon + 1;
     }
 
-    // Last dependency is `libjulia`, so load that and we're done with `dep_libs`!
-    void * libjulia = load_library(curr_dep, exe_dir);
+    // Last dependency is `libjulia-internal`, so load that and we're done with `dep_libs`!
+    void * libjulia_internal = load_library(curr_dep, exe_dir);
 
+    // Once we have libjulia-internal loaded, re-export its symbols:
+    loader_export_symbols(libjulia_internal);
+    return libjulia_internal;
+}
+
+// Load libjulia and run the REPL with the given arguments (in UTF-8 format)
+int load_repl(const char * exe_dir, int argc, char * argv[]) {
+    void * libjulia_internal = load_libjulia_internal(exe_dir);
     // Next, if we're on Linux/FreeBSD, set up fast TLS.
 #if !defined(_OS_WINDOWS_) && !defined(_OS_DARWIN_)
-    void (*jl_set_ptls_states_getter)(void *) = dlsym(libjulia, "jl_set_ptls_states_getter");
+    void (*jl_set_ptls_states_getter)(void *) = dlsym(libjulia_internal, "jl_set_ptls_states_getter");
     if (jl_set_ptls_states_getter == NULL) {
-        print_stderr("ERROR: Cannot find jl_set_ptls_states_getter() function within libjulia!\n");
+        print_stderr("ERROR: Cannot find jl_set_ptls_states_getter() function within libjulia-internal!\n");
         exit(1);
     }
     void * (*fptr)(void) = dlsym(NULL, "jl_get_ptls_states_static");
@@ -172,12 +182,12 @@ int load_repl(const char * exe_dir, int argc, char * argv[])
     // Load the repl entrypoint symbol and jump into it!
     int (*entrypoint)(int, char **) = NULL;
     #ifdef _OS_WINDOWS_
-        entrypoint = (int (*)(int, char **))GetProcAddress((HMODULE) libjulia, "repl_entrypoint");
+    entrypoint = (int (*)(int, char **))GetProcAddress((HMODULE) libjulia_internal, "repl_entrypoint");
     #else
-        entrypoint = (int (*)(int, char **))dlsym(libjulia, "repl_entrypoint");
+    entrypoint = (int (*)(int, char **))dlsym(libjulia_internal, "repl_entrypoint");
     #endif
     if (entrypoint == NULL) {
-        print_stderr("ERROR: Unable to find `repl_entrypoint()` within libjulia!\n");
+        print_stderr("ERROR: Unable to find `repl_entrypoint()` within libjulia-internal!\n");
         exit(1);
     }
     return entrypoint(argc, (char **)argv);

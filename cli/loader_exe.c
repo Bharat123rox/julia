@@ -6,7 +6,7 @@ extern "C" {
 
 /* Define ptls getter, as this cannot be defined within a shared library. */
 #if !defined(_OS_WINDOWS_) && !defined(_OS_DARWIN_)
-__attribute__ ((visibility("default"))) JL_CONST_FUNC void * jl_get_ptls_states_static(void)
+JL_DLLEXPORT JL_CONST_FUNC void * jl_get_ptls_states_static(void)
 {
     /* Because we can't #include <julia.h> in this file, we define a TLS state object with
      * hopefully enough room; at last check, the `jl_tls_states_t` struct was <16KB. */

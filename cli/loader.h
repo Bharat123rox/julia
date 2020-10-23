@@ -49,6 +49,15 @@
 #  define JL_CONST_FUNC
 #endif
 
+// Borrow definition from `support/dtypes.h`
+#ifdef _OS_WINDOWS_
+#define JL_DLLEXPORT __declspec(dllexport)
+#else
+#define JL_DLLEXPORT __attribute__ ((visibility("protected")))
+#endif
+#define JL_NAKED     __attribute__ ((naked))
+
+
 
 // Declarations from `loader_lib.c` and `loader_win_utils.c`
 extern const char * get_exe_dir();

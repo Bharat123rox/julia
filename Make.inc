@@ -607,6 +607,15 @@ else
   SHLIB_EXT := so
 endif
 
+ifeq ($(SHLIB_EXT), so)
+define SONAME
+-Wl,-soname=$1
+endef
+else
+define SONAME
+endef
+endif
+
 # On Windows, we want shared library files to end up in $(build_bindir), instead of $(build_libdir)
 # We also don't really have a private bindir on windows right now, due to lack of RPATH.
 ifeq ($(OS),WINNT)
@@ -1479,11 +1488,11 @@ define dep_lib_path
 $$($(PYTHON) $(call python_cygpath,$(JULIAHOME)/contrib/relative_path.py) $(1) $(2))
 endef
 
-LIBJULIA_BUILD_DEPLIB := $(call dep_lib_path,$(build_bindir),$(build_shlibdir)/libjulia.$(JL_MAJOR_MINOR_SHLIB_EXT))
-LIBJULIA_INSTALL_DEPLIB := $(call dep_lib_path,$(bindir),$(shlibdir)/libjulia.$(JL_MAJOR_MINOR_SHLIB_EXT))
+LIBJULIAINTERNAL_BUILD_DEPLIB := $(call dep_lib_path,$(build_bindir),$(build_shlibdir)/libjulia-internal.$(JL_MAJOR_MINOR_SHLIB_EXT))
+LIBJULIAINTERNAL_INSTALL_DEPLIB := $(call dep_lib_path,$(bindir),$(shlibdir)/libjulia-internal.$(JL_MAJOR_MINOR_SHLIB_EXT))
 
-LIBJULIA_DEBUG_BUILD_DEPLIB := $(call dep_lib_path,$(build_bindir),$(build_shlibdir)/libjulia-debug.$(JL_MAJOR_MINOR_SHLIB_EXT))
-LIBJULIA_DEBUG_INSTALL_DEPLIB := $(call dep_lib_path,$(bindir),$(shlibdir)/libjulia-debug.$(JL_MAJOR_MINOR_SHLIB_EXT))
+LIBJULIAINTERNAL_DEBUG_BUILD_DEPLIB := $(call dep_lib_path,$(build_bindir),$(build_shlibdir)/libjulia-internal-debug.$(JL_MAJOR_MINOR_SHLIB_EXT))
+LIBJULIAINTERNAL_DEBUG_INSTALL_DEPLIB := $(call dep_lib_path,$(bindir),$(shlibdir)/libjulia-internal-debug.$(JL_MAJOR_MINOR_SHLIB_EXT))
 
 ifeq ($(OS),WINNT)
 ifeq ($(BINARY),32)
@@ -1520,10 +1529,10 @@ LIBM_INSTALL_DEPLIB := $(call dep_lib_path,$(bindir),$(private_shlibdir)/$(LIBMN
 #  * debug builds must link against libjuliadebug, not libjulia
 #  * install time relative paths are not equal to build time relative paths (../lib vs. ../lib/julia)
 # That second point will no longer be true for most deps once they are placed within Artifacts directories.
-LOADER_BUILD_DEP_LIBS = $(LIBGCC_BUILD_DEPLIB):$(LIBM_BUILD_DEPLIB):$(LIBJULIA_BUILD_DEPLIB)
-LOADER_DEBUG_BUILD_DEP_LIBS = $(LIBGCC_BUILD_DEPLIB):$(LIBM_BUILD_DEPLIB):$(LIBJULIA_DEBUG_BUILD_DEPLIB)
-LOADER_INSTALL_DEP_LIBS = $(LIBGCC_INSTALL_DEPLIB):$(LIBM_INSTALL_DEPLIB):$(LIBJULIA_INSTALL_DEPLIB)
-LOADER_DEBUG_INSTALL_DEP_LIBS = $(LIBGCC_INSTALL_DEPLIB):$(LIBM_INSTALL_DEPLIB):$(LIBJULIA_DEBUG_INSTALL_DEPLIB)
+LOADER_BUILD_DEP_LIBS = $(LIBGCC_BUILD_DEPLIB):$(LIBM_BUILD_DEPLIB):$(LIBJULIAINTERNAL_BUILD_DEPLIB)
+LOADER_DEBUG_BUILD_DEP_LIBS = $(LIBGCC_BUILD_DEPLIB):$(LIBM_BUILD_DEPLIB):$(LIBJULIAINTERNAL_DEBUG_BUILD_DEPLIB)
+LOADER_INSTALL_DEP_LIBS = $(LIBGCC_INSTALL_DEPLIB):$(LIBM_INSTALL_DEPLIB):$(LIBJULIAINTERNAL_INSTALL_DEPLIB)
+LOADER_DEBUG_INSTALL_DEP_LIBS = $(LIBGCC_INSTALL_DEPLIB):$(LIBM_INSTALL_DEPLIB):$(LIBJULIAINTERNAL_DEBUG_INSTALL_DEPLIB)
 
 # Colors for make
 ifndef VERBOSE

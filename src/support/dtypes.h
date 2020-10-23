@@ -63,7 +63,8 @@
 */
 
 #ifdef _OS_WINDOWS_
-#define STDCALL __stdcall
+#define STDCALL  __stdcall
+#define JL_NAKED __attribute__ ((naked))
 # ifdef LIBRARY_EXPORTS
 #  define JL_DLLEXPORT __declspec(dllexport)
 # else
@@ -71,6 +72,7 @@
 # endif
 #else
 #define STDCALL
+#define JL_NAKED     __attribute__ ((naked))
 #define JL_DLLEXPORT __attribute__ ((visibility("default")))
 #endif
 
